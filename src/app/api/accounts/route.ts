@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+// Set runtime to nodejs
+export const runtime = 'nodejs';
+
 interface UnipileAccount {
   type: string;
   id: string;
@@ -18,11 +21,20 @@ export async function GET() {
     const dsn = process.env.UNIPILE_DSN;
 
     if (!apiKey || !dsn) {
+      console.error('Missing environment variables:', {
+        hasApiKey: !!apiKey,
+        hasDsn: !!dsn
+      });
       return NextResponse.json(
         { error: 'API key or DSN not configured' },
         { status: 500 }
       );
     }
+
+    console.log('Making request to Unipile API:', {
+      url: `${dsn}/api/v1/accounts`,
+      hasApiKey: !!apiKey
+    });
 
     const response = await fetch(`${dsn}/api/v1/accounts`, {
       headers: {
@@ -32,7 +44,13 @@ export async function GET() {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch accounts from Unipile');
+      const errorText = await response.text();
+      console.error('Unipile API error:', {
+        status: response.status,
+        statusText: response.status,
+        error: errorText
+      });
+      throw new Error(`Failed to fetch accounts from Unipile: ${response.status} ${errorText}`);
     }
 
     const data: UnipileResponse = await response.json();
@@ -51,7 +69,10 @@ export async function GET() {
 
     return NextResponse.json(linkedinAccounts);
   } catch (error) {
-    console.error('Error fetching accounts:', error);
+    console.error('Error fetching accounts:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
     return NextResponse.json(
       { error: 'Failed to fetch accounts' },
       { status: 500 }
