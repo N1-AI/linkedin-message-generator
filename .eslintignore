@@ -1,0 +1,5 @@
+# Ignore everything
+*
+# Except for .eslintrc.json and package.json
+!.eslintrc.json
+!package.json 

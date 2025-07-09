@@ -1,5 +1,18 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Environment Setup
+
+Before running the application, you need to set up your environment variables:
+
+1. Create a `.env.local` file in the root directory
+2. Add the following variables:
+```env
+UNIPILE_API_KEY=your_api_key_here
+UNIPILE_DSN=https://api15.unipile.com:14520
+```
+
+Never commit the `.env.local` file to version control. The `.gitignore` file should already exclude it.
+
 ## Getting Started
 
 First, run the development server:

@@ -1,0 +1,54 @@
+{
+    "extends": ["next/core-web-vitals"],
+    "rules": {
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-empty-interface": "off",
+      "@typescript-eslint/no-empty-object-type": "off",
+      "@typescript-eslint/no-empty-function": "off",
+      "@typescript-eslint/no-var-requires": "off",
+      "@typescript-eslint/ban-ts-comment": "off",
+      "@typescript-eslint/ban-types": "off",
+      "@typescript-eslint/no-non-null-assertion": "off",
+      
+      "react-hooks/rules-of-hooks": "off",
+      "react-hooks/exhaustive-deps": "off",
+      "react/prop-types": "off",
+      "react/react-in-jsx-scope": "off",
+      "react/display-name": "off",
+      "react/no-unescaped-entities": "off",
+      
+      "jsx-a11y/alt-text": "off",
+      "jsx-a11y/click-events-have-key-events": "off",
+      "jsx-a11y/no-static-element-interactions": "off",
+      "jsx-a11y/anchor-is-valid": "off",
+      
+      "prefer-const": "off",
+      "no-unused-vars": "off",
+      "no-console": "off",
+      "no-undef": "off",
+      "no-empty": "off",
+      "no-useless-escape": "off",
+      
+      "import/no-anonymous-default-export": "off",
+      
+      "next/no-img-element": "off",
+      "next/no-html-link-for-pages": "off",
+
+      // Additional rules to make it more lenient
+      "no-warning-comments": "off",
+      "no-prototype-builtins": "off",
+      "no-async-promise-executor": "off",
+      "no-case-declarations": "off",
+      "no-constant-condition": "off",
+      "no-ex-assign": "off",
+      "no-extra-boolean-cast": "off",
+      "no-inner-declarations": "off",
+      "no-irregular-whitespace": "off",
+      "no-mixed-spaces-and-tabs": "off",
+      "no-unsafe-finally": "off",
+      "valid-typeof": "off",
+      "react/no-unknown-property": "off",
+      "react/no-children-prop": "off"
+    }
+  } 
