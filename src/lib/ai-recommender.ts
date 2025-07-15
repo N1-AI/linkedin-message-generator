@@ -50,12 +50,12 @@ function getFirstName(fullName: string | undefined): string {
   return fullName.split(' ')[0];
 }
 
-async function callAIApi(profileData: EnrichedData, prompt: string, format: 'json' | 'text' = 'text'): Promise<string> {
+async function callAIApi(profileData: EnrichedData, prompt: string, format: 'json' | 'text' = 'text', language: 'ENG' | 'ITA' = 'ENG'): Promise<string> {
   try {
     const response = await fetch('/api/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, format })
+      body: JSON.stringify({ prompt, format, language })
     });
 
     const data = await response.json();
@@ -75,7 +75,7 @@ async function callAIApi(profileData: EnrichedData, prompt: string, format: 'jso
   }
 }
 
-async function generateAIAnalysis(profileData: EnrichedData): Promise<PersonSummary> {
+async function generateAIAnalysis(profileData: EnrichedData, language: 'ENG' | 'ITA' = 'ENG'): Promise<PersonSummary> {
   try {
     const prompt = `Analyze this LinkedIn user's activity and generate insights about their interests, communities, viewpoints, and current needs. Focus on recent patterns and explicit interests.
 
@@ -99,7 +99,7 @@ Format the response as a JSON object with these arrays:
   "currentNeeds": []
 }`;
 
-    const content = await callAIApi(profileData, prompt, 'json');
+    const content = await callAIApi(profileData, prompt, 'json', language);
     if (!content) {
       throw new Error('No content in AI response');
     }
@@ -117,7 +117,7 @@ Format the response as a JSON object with these arrays:
   }
 }
 
-async function generateMessageSequence(profileData: EnrichedData, prompt: string, messageCount: number = 1): Promise<string[]> {
+async function generateMessageSequence(profileData: EnrichedData, prompt: string, messageCount: number = 1, language: 'ENG' | 'ITA' = 'ENG'): Promise<string[]> {
   try {
     const firstName = getFirstName(profileData.profile.name);
     const enhancedPrompt = `Generate ${messageCount} natural, conversational messages as part of a sequence. Use their first name "${firstName}" naturally and casually in the conversation, but don't overuse it. The messages should flow naturally as if sent over time (minutes or hours apart).
@@ -129,7 +129,7 @@ Make sure the messages build on each other naturally and maintain context.
 Keep the tone casual and friendly - write as if messaging a colleague you know well.`;
 
     console.log('Message Sequence Prompt:', enhancedPrompt);
-    const content = await callAIApi(profileData, enhancedPrompt, 'json');
+    const content = await callAIApi(profileData, enhancedPrompt, 'json', language);
     console.log('Message Sequence Response:', content);
 
     if (!content) {
@@ -194,7 +194,7 @@ ${formality === 'professional' ?
   `"I came across an insightful analysis of [specific aspect] that aligns with our previous discussion about [topic]. The perspective on [specific point] in {url} offers some valuable considerations."` :
   `"Just read about [specific aspect] - totally changed how I think about [topic]! The part about [specific point] in {url} really got me thinking."`}`;
 
-      const messages = await generateMessageSequence(profileData, messagePrompt, 1);
+      const messages = await generateMessageSequence(profileData, messagePrompt, 1, settings.language);
       const message = messages[0];
 
       // Ensure the message contains the {url} placeholder
@@ -251,24 +251,35 @@ async function searchPodcasts(profileData: EnrichedData, interests: string[], se
     if (data.items && data.items.length > 0) {
       const podcast = data.items[0];
       const firstName = getFirstName(profileData.profile.name);
+      const formality = settings.professional >= 3 ? 'professional' : 'casual';
       
-      const messagePrompt = `Write a message to ${firstName} recommending a podcast episode.
+      const messagePrompt = `Write a ${formality} message to ${firstName} sharing an interesting podcast.
 
-Episode Title: ${podcast.title}
-Episode Summary: ${podcast.snippet}
+Podcast Title: ${podcast.title}
+Podcast Summary: ${podcast.snippet}
 
 Key guidelines:
-- Write in the same style as the article recommendation
-- Use {url} as a placeholder for the episode link
-- Reference something specific from the episode
+${formality === 'professional' ? `
+- Maintain a polite, professional tone
+- Use proper grammar and punctuation
+- Avoid colloquialisms and slang
+- Reference specific professional insights
+- Keep the tone warm but businesslike` : `
+- Write like you're texting a friend
+- Keep it super casual and natural
+- Use conversational language
+- Add personal anecdotes or experiences
+- Keep it friendly and relatable`}
+- Include {url} as the podcast link
+- Reference something specific from the podcast
 - Keep it focused and concise
-- Don't directly reference their profile/posts
-- Make the connection feel natural and organic
 
-Example:
-"This discussion about [specific topic] reminded me of some challenges we've been tackling. The insights about [specific point] in {url} really resonated. Curious to hear your thoughts on their approach."`;
+Example tone (but write your own):
+${formality === 'professional' ? 
+  `"I discovered a compelling podcast discussing [specific aspect] that offers nuanced insights into [topic]. The discussion at {url} provides a fresh perspective on emerging trends."` :
+  `"OMG, just listened to this podcast about [specific aspect] - totally blew my mind! The part about [specific point] at {url} is 🔥"`}`;
 
-      const messages = await generateMessageSequence(profileData, messagePrompt, 1);
+      const messages = await generateMessageSequence(profileData, messagePrompt, 1, settings.language);
       const message = messages[0];
 
       // Ensure the message contains the {url} placeholder
@@ -293,64 +304,38 @@ Example:
     console.error('Error searching for podcasts:', error);
   }
   
+  const firstName = getFirstName(profileData.profile.name);
+  const formality = settings.professional >= 3 ? 'professional' : 'casual';
   return {
     title: "Default Podcast",
     url: "https://example.com/podcast",
-    summary: "Podcast about industry insights",
-    message: `Found this great discussion about emerging tech trends. The part about AI implementation strategies is particularly relevant. {url}`
+    summary: "Podcast about technology and innovation",
+    message: formality === 'professional' ? 
+      `I recently came across an insightful podcast discussing emerging technology trends. The analysis of AI and innovation workflows in {url} provides a compelling perspective on current industry developments.` :
+      `Found this awesome podcast about tech trends! The AI and innovation stuff at {url} is super interesting.`
   };
 }
 
 async function generateGeneralMessages(profileData: EnrichedData, personSummary: PersonSummary, messageSettings: MessageSettings): Promise<GeneralMessage[]> {
   try {
-    const messageCount = 6; // Always generate 6 general messages
     const firstName = getFirstName(profileData.profile.name);
-    const formality = messageSettings.professional >= 3 ? 'professional' : 'casual';
-    
-    const prompt = `Write ${messageCount} ${formality} messages to ${firstName}. Each message should be a separate conversation starter.
+    const prompt = `Generate 2-3 general, conversational messages that feel natural and contextual based on the user's profile and interests.
 
-Recent Activity:
-${JSON.stringify({
-  posts: profileData.activity.posts.slice(0, 2),
-  comments: profileData.activity.comments.slice(0, 2),
-  reactions: profileData.activity.reactions.slice(0, 2)
-}, null, 2)}
+User Profile Summary:
+${JSON.stringify(personSummary, null, 2)}
 
-Their Interests: ${personSummary.interests.join(', ')}
+Key Guidelines:
+- Use the first name "${firstName}" naturally
+- Reference their interests and professional context subtly
+- Keep messages varied and engaging
+- Avoid direct references to their specific posts or activities
+- Maintain a ${messageSettings.professional >= 3 ? 'professional' : 'casual'} tone
+- ${messageSettings.language === 'ITA' ? 'Write in Italian' : 'Write in English'}
 
-Key guidelines:
-${formality === 'professional' ? `
-- Maintain a polite, professional tone
-- Use proper grammar and punctuation
-- Avoid colloquialisms and slang
-- Focus on professional insights and business value
-- Keep questions focused on professional context
-- Reference specific industry trends or developments` : `
-- Write like you're texting a friend
-- Keep it super casual and natural
-- Use conversational language
-- Add personal anecdotes or experiences
-- Keep questions specific and timely
-- Make it friendly and relatable`}
-- Reference specific details from their activity
-- Each message should be a single, focused thought
-- Vary the topics and approaches
-
-Example tones (but write your own):
-${formality === 'professional' ? 
-  `"Your insights on optimizing API performance were quite interesting. Have you considered implementing a caching layer to address the rate limiting challenges?"` :
-  `"That productivity hack you mentioned saved me hours yesterday! Using it for my side project now 😄"`}
-
-Format as JSON array:
-[
-  {
-    "text": "the message text",
-    "context": "brief context about why this message is relevant"
-  }
-]`;
+Format as a JSON array of objects with 'text' and 'context' fields.`;
 
     console.log('General Messages Prompt:', prompt);
-    const content = await callAIApi(profileData, prompt, 'json');
+    const content = await callAIApi(profileData, prompt, 'json', messageSettings.language);
     console.log('General Messages Response:', content);
 
     if (!content) {
@@ -367,32 +352,34 @@ Format as JSON array:
 
 export async function generateRecommendation(input: RecommenderInput): Promise<RecommendationOutput> {
   const { profileData, settings } = input;
-  console.log('Generating recommendations for:', profileData.profile.name);
-  console.log('With settings:', settings);
-  
+
   try {
     // First get the person summary
-    const personSummary = await generateAIAnalysis(profileData);
+    const personSummary = await generateAIAnalysis(profileData, settings.language);
     console.log('Person Summary:', personSummary);
     
-    // Generate article and podcast recommendations and general messages in parallel
-    const [articleRec, podcastRec, generalMessages] = await Promise.all([
-      searchRecentArticles(profileData, personSummary.interests, settings),
-      searchPodcasts(profileData, personSummary.interests, settings),
-      generateGeneralMessages(profileData, personSummary, settings)
-    ]);
-    
-    const result = {
+    // Extract interests for article and podcast search
+    const interests = personSummary.interests.length > 0 
+      ? personSummary.interests 
+      : ['technology', 'professional development', 'innovation'];
+
+    // Generate article recommendation
+    const articleRecommendation = await searchRecentArticles(profileData, interests, settings);
+
+    // Generate podcast recommendation
+    const podcastRecommendation = await searchPodcasts(profileData, interests, settings);
+
+    // Generate general messages
+    const generalMessages = await generateGeneralMessages(profileData, personSummary, settings);
+
+    return {
       personSummary,
-      articleRecommendation: articleRec,
-      podcastRecommendation: podcastRec,
+      articleRecommendation,
+      podcastRecommendation,
       generalMessages
     };
-    
-    console.log('Final Recommendations:', result);
-    return result;
   } catch (error) {
-    console.error('Error generating recommendations:', error);
+    console.error('Error generating recommendation:', error);
     throw error;
   }
 } 
