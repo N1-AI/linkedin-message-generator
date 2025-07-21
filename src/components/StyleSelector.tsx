@@ -19,17 +19,33 @@ export function StyleSelector({ onStyleChange }: StyleSelectorProps) {
     return { professional, length };
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    handleMouseMove(e);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !containerRef.current) return;
+  const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault(); // Prevent default touch behavior
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    
+    if (!containerRef.current) return;
 
     const rect = containerRef.current.getBoundingClientRect();
-    const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
-    const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+    const x = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
+    
+    setIsDragging(true);
+    setPosition({ x, y });
+    
+    const { professional, length } = calculateStyles(x, y);
+    onStyleChange?.(professional, length);
+  };
+
+  const handleMouseMove = (e: MouseEvent | TouchEvent) => {
+    if (!isDragging || !containerRef.current) return;
+
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
     
     setPosition({ x, y });
     
@@ -45,9 +61,13 @@ export function StyleSelector({ onStyleChange }: StyleSelectorProps) {
     if (isDragging) {
       window.addEventListener('mousemove', handleMouseMove as any);
       window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('touchmove', handleMouseMove as any, { passive: false });
+      window.addEventListener('touchend', handleMouseUp);
       return () => {
         window.removeEventListener('mousemove', handleMouseMove as any);
         window.removeEventListener('mouseup', handleMouseUp);
+        window.removeEventListener('touchmove', handleMouseMove as any);
+        window.removeEventListener('touchend', handleMouseUp);
       };
     }
   }, [isDragging]);
@@ -57,8 +77,9 @@ export function StyleSelector({ onStyleChange }: StyleSelectorProps) {
       <Label className="text-sm text-gray-500">Style</Label>
       <div 
         ref={containerRef}
-        className="relative w-full h-[200px] bg-gray-50 rounded-md overflow-hidden"
+        className="relative w-full h-[200px] bg-gray-50 rounded-md overflow-hidden touch-none"
         onMouseDown={handleMouseDown}
+        onTouchStart={handleMouseDown}
       >
         {/* Grid lines - positioned behind text */}
         <div className="absolute inset-0 grid grid-cols-4 grid-rows-4">

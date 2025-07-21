@@ -20,6 +20,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ProfileCard } from "@/components/ProfileCard";
 import { LinkedInProfile } from "@/components/LinkedInSearch";
 import { generateRecommendation, GeneralMessage } from "@/lib/ai-recommender";
+import { useRouter } from 'next/navigation';
 
 interface Reaction {
   type: string;
@@ -296,6 +297,7 @@ function MessageCard({ message, link, setIndex }: { message: string; link?: stri
 }
 
 export default function Playground() {
+  const router = useRouter();
   const [profileData, setProfileData] = useState<EnrichedData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -386,6 +388,14 @@ export default function Playground() {
         }
       });
       
+      // For mobile, store recommendations in sessionStorage and navigate
+      if (window.innerWidth < 640) {
+        sessionStorage.setItem('playgroundRecommendations', JSON.stringify(recommendation));
+        router.push('/playground/results');
+        return;
+      }
+      
+      // For desktop, set recommendations directly
       setRecommendations(recommendation);
       console.log('AI Recommendation Data:', recommendation);
     } catch (error) {
@@ -413,9 +423,9 @@ export default function Playground() {
         }}
       />
 
-      <div className="relative w-full h-screen p-4 flex gap-4 items-center justify-center">
-        <Card className="w-[400px] h-[600px] shadow-lg p-4 flex flex-col">
-          <div className="space-y-6 flex-1">
+      <div className="relative w-full h-screen p-4 flex flex-col sm:flex-row gap-4 items-center justify-center">
+        <Card className="w-full sm:w-[400px] h-[400px] sm:h-[600px] shadow-lg p-4 flex flex-col">
+          <div className="space-y-4 overflow-auto">
             <StyleSelector onStyleChange={handleStyleChange} />
             <MessageControls 
               onPurposeChange={handlePurposeChange}
@@ -425,7 +435,7 @@ export default function Playground() {
           <div className="flex justify-between items-center pt-4">
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
-                <button className="text-sm text-gray-500 hover:text-gray-900 hover:underline">
+                <button className="text-sm text-gray-500 hover:text-gray-900 hover:underline sm:block hidden">
                   View Data
                 </button>
               </DialogTrigger>
@@ -540,7 +550,7 @@ export default function Playground() {
                 </div>
               </DialogContent>
             </Dialog>
-            <div className="flex justify-end mt-4">
+            <div className="flex justify-end mt-4 w-full">
               <Button 
                 onClick={handleSend}
                 disabled={isLoading}
@@ -556,7 +566,7 @@ export default function Playground() {
             </div>
           </div>
         </Card>
-        <Card className="w-[400px] h-[600px] shadow-lg p-4 flex flex-col">
+        <Card className="hidden sm:flex w-[400px] h-[600px] shadow-lg p-4 flex-col">
           {profileData && (
             <div className="flex flex-col h-full">
               <div className="flex-shrink-0 mb-4">
