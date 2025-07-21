@@ -9,7 +9,6 @@ import { ConnectedAccounts } from "@/components/ConnectedAccounts";
 import { LinkedInSearch, LinkedInProfile } from "@/components/LinkedInSearch";
 import { SendHorizontal, Hourglass } from "lucide-react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 
 interface Account {
   provider: string;
@@ -146,57 +145,48 @@ export default function Home() {
 
       {/* Main content */}
       <div className="relative flex items-center justify-center min-h-screen p-4">
-        <div className="flex flex-col items-center">
-          <Image 
-            src="/illy.png" 
-            alt="Illustration" 
-            width={100} 
-            height={100} 
-            className="hidden sm:block mb-4 opacity-100"
-          />
-          <Card className="w-full max-w-[800px] h-full max-h-[500px] sm:max-h-[700px] shadow-lg flex flex-col sm:w-[800px] sm:h-[700px] relative">
-            <div className="p-4 pt-3 h-full flex flex-col flex-1">
-              <ConnectedAccounts />
-              <div className="flex-1 min-h-0 relative flex flex-col">
-                <div className="flex-grow overflow-auto mb-2 pb-14 sm:pb-0 max-h-[300px] sm:max-h-none">
-                  <LinkedInSearch onSelect={setSelectedProfile} />
-                </div>
+        <Card className="w-full max-w-[800px] h-full max-h-[500px] sm:max-h-[700px] shadow-lg flex flex-col sm:w-[800px] sm:h-[700px] relative">
+          <div className="p-4 pt-3 h-full flex flex-col flex-1">
+            <ConnectedAccounts />
+            <div className="flex-1 min-h-0 relative flex flex-col">
+              <div className="flex-grow overflow-auto mb-2 pb-14 sm:pb-0 max-h-[300px] sm:max-h-none">
+                <LinkedInSearch onSelect={setSelectedProfile} />
               </div>
             </div>
-            {/* Mobile Send Button - Positioned absolutely */}
-            <div className="absolute bottom-4 right-4 sm:hidden z-10">
-              <Button
-                variant="default"
-                size="icon"
-                className="bg-black text-white hover:bg-gray-800"
-                disabled={!selectedProfile || loading || !selectedAccount}
-                onClick={handleSend}
-              >
-                {loading ? (
-                  <Hourglass className="h-5 w-5 animate-spin" />
-                ) : (
-                  <SendHorizontal className="h-5 w-5" />
-                )}
-              </Button>
-            </div>
-            {/* Card Footer - Only visible on desktop */}
-            <div className="w-full flex justify-end items-center pr-3 hidden sm:flex" style={{height: 56}}>
-              <Button
-                variant="default"
-                size="icon"
-                className="bg-black text-white hover:bg-gray-800"
-                disabled={!selectedProfile || loading || !selectedAccount}
-                onClick={handleSend}
-              >
-                {loading ? (
-                  <Hourglass className="h-5 w-5 animate-spin" />
-                ) : (
-                  <SendHorizontal className="h-5 w-5" />
-                )}
-              </Button>
-            </div>
-          </Card>
-        </div>
+          </div>
+          {/* Mobile Send Button - Positioned absolutely */}
+          <div className="absolute bottom-4 right-4 sm:hidden z-10">
+            <Button
+              variant="default"
+              size="icon"
+              className="bg-black text-white hover:bg-gray-800"
+              disabled={!selectedProfile || loading || !selectedAccount}
+              onClick={handleSend}
+            >
+              {loading ? (
+                <Hourglass className="h-5 w-5 animate-spin" />
+              ) : (
+                <SendHorizontal className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
+          {/* Card Footer - Only visible on desktop */}
+          <div className="w-full flex justify-end items-center pr-3 hidden sm:flex" style={{height: 56}}>
+            <Button
+              variant="default"
+              size="icon"
+              className="bg-black text-white hover:bg-gray-800"
+              disabled={!selectedProfile || loading || !selectedAccount}
+              onClick={handleSend}
+            >
+              {loading ? (
+                <Hourglass className="h-5 w-5 animate-spin" />
+              ) : (
+                <SendHorizontal className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
+        </Card>
       </div>
 
       {/* Footer */}
