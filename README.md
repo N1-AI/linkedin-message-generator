@@ -1,8 +1,8 @@
-# Digress: LinkedIn Outreach Assistant
+# N1AI : LinkedIn Outreach Assistant
 
 ## Overview
 
-Digress is an AI-powered LinkedIn outreach tool designed to help professionals create personalized, contextually relevant messages and recommendations.
+This is our first open source repository!
 
 ## Features
 
