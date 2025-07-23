@@ -1,49 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Digress: LinkedIn Outreach Assistant
+
+## Overview
+
+Digress is an AI-powered LinkedIn outreach tool designed to help professionals create personalized, contextually relevant messages and recommendations.
+
+## Features
+
+- 🔍 LinkedIn Profile Enrichment
+- 🤖 AI-Powered Message Generation
+- 📊 Customizable Message Styles
+- 🌐 Multi-Language Support
+
+## Prerequisites
+
+- Node.js (v18 or later)
+- npm or Yarn
+- Active accounts:
+  - Unipile
+  - OpenAI
+  - Google Custom Search
 
 ## Environment Setup
 
-Before running the application, you need to set up your environment variables:
-
-1. Create a `.env.local` file in the root directory
-2. Add the following variables:
-```env
-UNIPILE_API_KEY=your_api_key_here
-UNIPILE_DSN=https://api15.unipile.com:14520
+1. Clone the repository
+```bash
+git clone https://github.com/N1-AI/linkedin-message-generator.git 
+cd linkedin-message-generator
 ```
 
-Never commit the `.env.local` file to version control. The `.gitignore` file should already exclude it.
+2. Copy the example environment file
+```bash
+cp .env.example .env
+```
 
-## Getting Started
+3. Fill in the `.env` file with your credentials:
 
-First, run the development server:
+### Required Environment Variables
+- `UNIPILE_API_KEY`: Your Unipile API key
+- `UNIPILE_DSN`: Unipile Data Source Name
+- `OPENAI_API_KEY`: OpenAI API key for AI-powered recommendations
+- `GOOGLE_SEARCH_API_KEY`: Google Custom Search API key
+- `GOOGLE_SEARCH_ENGINE_ID`: Google Custom Search Engine ID
 
+## Installation
+
+```bash
+npm install
+# or
+yarn install
+```
+
+## Running the Application
+
+Development Mode:
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Production Build:
+```bash
+npm run build
+npm start
+# or
+yarn build
+yarn start
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Technologies
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Next.js 13
+- React
+- TypeScript
+- Tailwind CSS
+- Shadcn/ui
+- OpenAI
+- Unipile API
 
-## Learn More
+## Mobile Responsiveness
 
-To learn more about Next.js, take a look at the following resources:
+The application is fully responsive, with dedicated mobile layouts for:
+- Home Page
+- Playground
+- Recommendation Generation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Contributing
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## Deploy on Vercel
+## License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Distributed under the MIT License. See `LICENSE` for more information.
