@@ -37,10 +37,12 @@ cp .env.example .env
 
 ### Required Environment Variables
 - `UNIPILE_API_KEY`: Your Unipile API key
-- `UNIPILE_DSN`: Unipile Data Source Name
-- `OPENAI_API_KEY`: OpenAI API key for AI-powered recommendations
+- `UNIPILE_DSN`: Unipile Data Source Name, for example `https://api15.unipile.com:14522`
+- `OPENAI_API_KEY`: OpenAI API key for AI-powered recommendations eg. `sk-proj12345`
 - `GOOGLE_SEARCH_API_KEY`: Google Custom Search API key
 - `GOOGLE_SEARCH_ENGINE_ID`: Google Custom Search Engine ID
+(These can be found in your google developer window: `https://console.cloud.google.com/`)
+If you are part of the N1AI community, the unipile API key is free! Get in touch with Nic or Myself for access
 
 ## Installation
 
