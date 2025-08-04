@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 interface Account {
   provider: string;
@@ -10,50 +10,38 @@ interface Account {
   status: string;
 }
 
-export function ConnectedAccounts() {
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [error, setError] = useState<string | null>(null);
+interface ConnectedAccountsProps {
+  selectedAccount: Account | null;
+  onChangeAccount: () => void;
+}
 
-  useEffect(() => {
-    const fetchAccounts = async () => {
-      try {
-        const response = await fetch('/api/accounts');
-        if (!response.ok) {
-          throw new Error('Failed to fetch accounts');
-        }
-        const data = await response.json();
-        setAccounts(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch accounts');
-      }
-    };
-
-    fetchAccounts();
-  }, []);
-
-  if (error) {
+export function ConnectedAccounts({ selectedAccount, onChangeAccount }: ConnectedAccountsProps) {
+  if (!selectedAccount) {
     return (
-      <div className="flex gap-2 mb-4 text-sm text-red-500">
-        Error loading accounts: {error}
+      <div className="flex gap-2 mb-4 text-sm text-gray-500">
+        No account selected
       </div>
     );
   }
 
   return (
-    <div className="flex gap-2 mb-4">
-      {accounts.map((account) => (
+    <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-1.5 bg-gray-100/80 px-3 py-1.5 rounded-full text-sm">
         <div
-          key={account.id}
-          className="flex items-center gap-1.5 bg-gray-100/80 px-3 py-1.5 rounded-full text-sm"
-        >
-          <div
-            className={`w-2 h-2 rounded-full ${
-              account.status === 'connected' ? 'bg-green-500' : 'bg-red-500'
-            }`}
-          />
-          {account.status === 'connected' ? account.accountId : account.provider}
-        </div>
-      ))}
+          className={`w-2 h-2 rounded-full ${
+            selectedAccount.status === 'connected' ? 'bg-green-500' : 'bg-red-500'
+          }`}
+        />
+        {selectedAccount.status === 'connected' ? selectedAccount.accountId : selectedAccount.provider}
+      </div>
+      <Button 
+        variant="outline" 
+        size="sm"
+        onClick={onChangeAccount}
+        className="text-xs px-2 py-1"
+      >
+        Change
+      </Button>
     </div>
   );
 } 

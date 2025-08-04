@@ -4,6 +4,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q');
+    const accountId = searchParams.get('account_id');
 
     if (!query) {
       return NextResponse.json({ items: [] });
@@ -19,28 +20,37 @@ export async function GET(request: Request) {
       );
     }
 
-    // First get the LinkedIn account ID
-    const accountsResponse = await fetch(`${dsn}/api/v1/accounts`, {
-      headers: {
-        'X-API-KEY': apiKey,
-        'accept': 'application/json',
-      },
-    });
+    let linkedInAccountId: string;
 
-    if (!accountsResponse.ok) {
-      throw new Error('Failed to fetch accounts');
-    }
+    if (accountId) {
+      // Use the provided account ID
+      linkedInAccountId = accountId;
+    } else {
+      // Fallback: get the first LinkedIn account ID (for backward compatibility)
+      const accountsResponse = await fetch(`${dsn}/api/v1/accounts`, {
+        headers: {
+          'X-API-KEY': apiKey,
+          'accept': 'application/json',
+        },
+      });
 
-    const accountsData = await accountsResponse.json();
-    const linkedInAccount = accountsData.items.find((account: any) => account.type === 'LINKEDIN');
+      if (!accountsResponse.ok) {
+        throw new Error('Failed to fetch accounts');
+      }
 
-    if (!linkedInAccount) {
-      throw new Error('No LinkedIn account found');
+      const accountsData = await accountsResponse.json();
+      const linkedInAccount = accountsData.items.find((account: any) => account.type === 'LINKEDIN');
+
+      if (!linkedInAccount) {
+        throw new Error('No LinkedIn account found');
+      }
+      
+      linkedInAccountId = linkedInAccount.id;
     }
 
     // Now perform the search with the account ID
     const response = await fetch(
-      `${dsn}/api/v1/linkedin/search?account_id=${linkedInAccount.id}`,
+      `${dsn}/api/v1/linkedin/search?account_id=${linkedInAccountId}`,
       {
         method: 'POST',
         headers: {

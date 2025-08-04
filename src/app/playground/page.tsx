@@ -13,6 +13,8 @@ import {
   DialogTrigger,
   DialogTitle,
   DialogFooter,
+  DialogHeader,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,6 +23,7 @@ import { ProfileCard } from "@/components/ProfileCard";
 import { LinkedInProfile } from "@/components/LinkedInSearch";
 import { generateRecommendation, GeneralMessage } from "@/lib/ai-recommender";
 import { useRouter } from 'next/navigation';
+import { ConnectedAccounts } from "@/components/ConnectedAccounts";
 
 interface Reaction {
   type: string;
@@ -296,6 +299,14 @@ function MessageCard({ message, link, setIndex }: { message: string; link?: stri
   );
 }
 
+interface Account {
+  provider: string;
+  id: string;
+  name: string;
+  accountId: string;
+  status: string;
+}
+
 export default function Playground() {
   const router = useRouter();
   const [profileData, setProfileData] = useState<EnrichedData | null>(null);
@@ -309,6 +320,9 @@ export default function Playground() {
     language: 'ENG' as 'ENG' | 'ITA'
   });
   const [recommendations, setRecommendations] = useState<any>(null);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+  const [isAccountDialogOpen, setIsAccountDialogOpen] = useState(false);
 
   const scrollToBottom = () => {
     if (scrollAreaRef.current) {
@@ -370,6 +384,19 @@ export default function Playground() {
     }));
   };
 
+  const handleAccountSelect = (account: Account) => {
+    setSelectedAccount(account);
+    setIsAccountDialogOpen(false);
+    sessionStorage.setItem('selectedAccountId', account.id);
+  };
+
+  const handleChangeAccount = () => {
+    const connectedAccounts = accounts.filter((account) => account.status === 'connected');
+    if (connectedAccounts.length > 1) {
+      setIsAccountDialogOpen(true);
+    }
+  };
+
   const handleSend = async () => {
     if (!profileData) {
       console.warn('No profile data available');
@@ -407,6 +434,33 @@ export default function Playground() {
 
   return (
     <div className={`min-h-screen w-full relative ${GeistSans.className}`}>
+      {/* Account Selection Dialog */}
+      <Dialog open={isAccountDialogOpen} onOpenChange={setIsAccountDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Select LinkedIn Account</DialogTitle>
+            <DialogDescription>
+              You have multiple connected LinkedIn accounts. Please choose which one to use.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            {accounts
+              .filter((account) => account.status === 'connected')
+              .map((account) => (
+                <Button 
+                  key={account.id} 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => handleAccountSelect(account)}
+                >
+                  {account.accountId}
+                </Button>
+              ))
+            }
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div 
         className="absolute inset-0 w-full h-full"
         style={{
@@ -424,8 +478,12 @@ export default function Playground() {
       />
 
       <div className="relative w-full h-screen p-4 flex flex-col sm:flex-row gap-4 items-center justify-center">
-        <Card className="w-full sm:w-[400px] h-[400px] sm:h-[600px] shadow-lg p-4 flex flex-col">
-          <div className="space-y-4 overflow-auto">
+        <Card className="w-full sm:w-[600px] h-[400px] sm:h-[600px] shadow-lg p-4 flex flex-col">
+          <ConnectedAccounts 
+            selectedAccount={selectedAccount} 
+            onChangeAccount={handleChangeAccount}
+          />
+          <div className="space-y-4">
             <StyleSelector onStyleChange={handleStyleChange} />
             <MessageControls 
               onPurposeChange={handlePurposeChange}
@@ -435,7 +493,7 @@ export default function Playground() {
           <div className="flex justify-between items-center pt-4">
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
-                <button className="text-sm text-gray-500 hover:text-gray-900 hover:underline sm:block hidden">
+                <button className="text-sm text-gray-500 hover:text-gray-900 hover:underline sm:block hidden whitespace-nowrap">
                   View Data
                 </button>
               </DialogTrigger>
@@ -566,7 +624,7 @@ export default function Playground() {
             </div>
           </div>
         </Card>
-        <Card className="hidden sm:flex w-[400px] h-[600px] shadow-lg p-4 flex-col">
+        <Card className="hidden sm:flex w-[600px] h-[600px] shadow-lg p-4 flex-col">
           {profileData && (
             <div className="flex flex-col h-full">
               <div className="flex-shrink-0 mb-4">

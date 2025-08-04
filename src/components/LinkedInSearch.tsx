@@ -17,9 +17,10 @@ export interface LinkedInProfile {
 
 interface LinkedInSearchProps {
   onSelect?: (profile: LinkedInProfile | null) => void;
+  selectedAccountId?: string | null;
 }
 
-export function LinkedInSearch({ onSelect }: LinkedInSearchProps) {
+export function LinkedInSearch({ onSelect, selectedAccountId }: LinkedInSearchProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<LinkedInProfile[]>([]);
   const [loading, setLoading] = useState(false);
@@ -35,10 +36,20 @@ export function LinkedInSearch({ onSelect }: LinkedInSearchProps) {
       return;
     }
 
+    if (!selectedAccountId) {
+      console.error('No account selected for search');
+      setResults([]);
+      setSelectedIndex(null);
+      if (onSelect) onSelect(null);
+      setHasSearched(true);
+      return;
+    }
+
     setLoading(true);
     setHasSearched(true);
     try {
-      const response = await fetch(`/api/linkedin/search?q=${encodeURIComponent(query)}`);
+      const searchUrl = `/api/linkedin/search?q=${encodeURIComponent(query)}&account_id=${encodeURIComponent(selectedAccountId)}`;
+      const response = await fetch(searchUrl);
       if (!response.ok) {
         throw new Error('Search failed');
       }
@@ -96,7 +107,7 @@ export function LinkedInSearch({ onSelect }: LinkedInSearchProps) {
           <Settings className="h-4 w-4 text-gray-700" />
         </Button>
       </div>
-      <ScrollArea className="h-[370px]">
+      <ScrollArea className="h-[460px]">
         <div className="space-y-2">
           {results.length === 0 && !loading && !hasSearched && (
             <div className="text-gray-400 text-sm text-center mt-16">search results will appear here</div>

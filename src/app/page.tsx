@@ -26,6 +26,15 @@ export default function Home() {
   const [isAccountDialogOpen, setIsAccountDialogOpen] = useState(false);
   const router = useRouter();
 
+  // Load selected account from session storage
+  useEffect(() => {
+    const savedAccountId = sessionStorage.getItem('selectedAccountId');
+    if (savedAccountId) {
+      // We'll set the account after fetching accounts
+      return;
+    }
+  }, []);
+
   useEffect(() => {
     const fetchAccounts = async () => {
       try {
@@ -36,12 +45,25 @@ export default function Home() {
         const data = await response.json();
         setAccounts(data);
 
-        // Open account selection dialog if more than one connected account
         const connectedAccounts = data.filter((account: Account) => account.status === 'connected');
+        
+        // Try to load saved account from session storage
+        const savedAccountId = sessionStorage.getItem('selectedAccountId');
+        if (savedAccountId) {
+          const savedAccount = connectedAccounts.find((account: Account) => account.id === savedAccountId);
+          if (savedAccount) {
+            setSelectedAccount(savedAccount);
+            return;
+          }
+        }
+
+        // If no saved account or saved account not found, handle selection
         if (connectedAccounts.length > 1) {
           setIsAccountDialogOpen(true);
         } else if (connectedAccounts.length === 1) {
           setSelectedAccount(connectedAccounts[0]);
+          // Save to session storage
+          sessionStorage.setItem('selectedAccountId', connectedAccounts[0].id);
         }
       } catch (err) {
         console.error('Failed to fetch accounts', err);
@@ -54,6 +76,15 @@ export default function Home() {
   const handleAccountSelect = (account: Account) => {
     setSelectedAccount(account);
     setIsAccountDialogOpen(false);
+    // Save to session storage
+    sessionStorage.setItem('selectedAccountId', account.id);
+  };
+
+  const handleChangeAccount = () => {
+    const connectedAccounts = accounts.filter((account) => account.status === 'connected');
+    if (connectedAccounts.length > 1) {
+      setIsAccountDialogOpen(true);
+    }
   };
 
   const handleSend = async () => {
@@ -147,10 +178,16 @@ export default function Home() {
       <div className="relative flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-[800px] h-full max-h-[500px] sm:max-h-[700px] shadow-lg flex flex-col sm:w-[800px] sm:h-[700px] relative">
           <div className="p-4 pt-3 h-full flex flex-col flex-1">
-            <ConnectedAccounts />
+            <ConnectedAccounts 
+              selectedAccount={selectedAccount} 
+              onChangeAccount={handleChangeAccount}
+            />
             <div className="flex-1 min-h-0 relative flex flex-col">
               <div className="flex-grow overflow-auto mb-2 pb-14 sm:pb-0 max-h-[300px] sm:max-h-none">
-                <LinkedInSearch onSelect={setSelectedProfile} />
+                <LinkedInSearch 
+                  onSelect={setSelectedProfile} 
+                  selectedAccountId={selectedAccount?.id || null}
+                />
               </div>
             </div>
           </div>

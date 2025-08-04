@@ -26,19 +26,19 @@ async function fetchWithLogging(url: string, options: RequestInit, description: 
   }
 }
 
-async function fetchPostDetails(dsn: string, postId: string, accountId: string, headers: HeadersInit) {
+async function fetchPostDetails(dsn: string, postId: string, linkedInAccountId: string, headers: HeadersInit) {
   const postRes = await fetchWithLogging(
-    `${dsn}/api/v1/posts/${postId}?account_id=${accountId}`,
+    `${dsn}/api/v1/posts/${postId}?account_id=${linkedInAccountId}`,
     { headers },
     `Post Details ${postId}`
   );
   return postRes.ok ? postRes.data : null;
 }
 
-async function fetchMessages(dsn: string, userId: string, accountId: string, headers: HeadersInit) {
+async function fetchMessages(dsn: string, userId: string, linkedInAccountId: string, headers: HeadersInit) {
   // First get the list of chats
   const chatsRes = await fetchWithLogging(
-    `${dsn}/api/v1/chat_attendees/${userId}/chats?account_id=${accountId}`,
+    `${dsn}/api/v1/chat_attendees/${userId}/chats?account_id=${linkedInAccountId}`,
     { headers },
     'Chats'
   );
@@ -53,7 +53,7 @@ async function fetchMessages(dsn: string, userId: string, accountId: string, hea
   
   for (const chat of chatsRes.data.items) {
     const messagesRes = await fetchWithLogging(
-      `${dsn}/api/v1/chats/${chat.id}/messages?account_id=${accountId}&limit=50`,
+      `${dsn}/api/v1/chats/${chat.id}/messages?account_id=${linkedInAccountId}&limit=50`,
       { headers },
       `Messages for chat ${chat.id}`
     );
@@ -82,7 +82,7 @@ async function fetchMessages(dsn: string, userId: string, accountId: string, hea
 export async function POST(request: Request) {
   try {
     console.log('Starting enrich-profile request');
-    const { userId } = await request.json();
+    const { userId, accountId } = await request.json();
     if (!userId) {
       return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
     }
@@ -98,25 +98,34 @@ export async function POST(request: Request) {
       'accept': 'application/json',
     };
 
-    // Step 1: Get LinkedIn accountId
-    const accountsRes = await fetchWithLogging(
-      `${dsn}/api/v1/accounts`,
-      { headers },
-      'Accounts'
-    );
-    if (!accountsRes.ok) {
-      return NextResponse.json({ error: 'Failed to fetch accounts' }, { status: accountsRes.status });
+    // Step 1: Get LinkedIn linkedInAccountId
+    let linkedInAccountId: string;
+    
+    if (accountId) {
+      // Use the provided account ID
+      linkedInAccountId = accountId;
+      console.log('Using provided account ID:', linkedInAccountId);
+    } else {
+      // Fallback: get the first LinkedIn account ID (for backward compatibility)
+      const accountsRes = await fetchWithLogging(
+        `${dsn}/api/v1/accounts`,
+        { headers },
+        'Accounts'
+      );
+      if (!accountsRes.ok) {
+        return NextResponse.json({ error: 'Failed to fetch accounts' }, { status: accountsRes.status });
+      }
+      const linkedinAccount = (accountsRes.data.items || []).find((a: any) => a.type && a.type.toLowerCase() === 'linkedin');
+      if (!linkedinAccount) {
+        return NextResponse.json({ error: 'No LinkedIn account found' }, { status: 404 });
+      }
+      linkedInAccountId = linkedinAccount.id;
+      console.log('Found LinkedIn account ID:', linkedInAccountId);
     }
-    const linkedinAccount = (accountsRes.data.items || []).find((a: any) => a.type && a.type.toLowerCase() === 'linkedin');
-    if (!linkedinAccount) {
-      return NextResponse.json({ error: 'No LinkedIn account found' }, { status: 404 });
-    }
-    const accountId = linkedinAccount.id;
-    console.log('Found LinkedIn account ID:', accountId);
 
     // Step 2: Retrieve the profile
     const profileRes = await fetchWithLogging(
-      `${dsn}/api/v1/users/${userId}?account_id=${accountId}`,
+      `${dsn}/api/v1/users/${userId}?account_id=${linkedInAccountId}`,
       { headers },
       'Profile'
     );
@@ -133,17 +142,17 @@ export async function POST(request: Request) {
     // Step 3: Get last 10 posts, reactions, and comments
     const [postsRes, reactionsRes, commentsRes] = await Promise.all([
       fetchWithLogging(
-        `${dsn}/api/v1/users/${userId}/posts?account_id=${accountId}&limit=10`,
+        `${dsn}/api/v1/users/${userId}/posts?account_id=${linkedInAccountId}&limit=10`,
         { headers },
         'Posts'
       ),
       fetchWithLogging(
-        `${dsn}/api/v1/users/${userId}/reactions?account_id=${accountId}&limit=10`,
+        `${dsn}/api/v1/users/${userId}/reactions?account_id=${linkedInAccountId}&limit=10`,
         { headers },
         'Reactions'
       ),
       fetchWithLogging(
-        `${dsn}/api/v1/users/${userId}/comments?account_id=${accountId}&limit=10`,
+        `${dsn}/api/v1/users/${userId}/comments?account_id=${linkedInAccountId}&limit=10`,
         { headers },
         'Comments'
       )
@@ -163,7 +172,7 @@ export async function POST(request: Request) {
     const reactions = [];
     const reactionItems = (reactionsRes.ok ? reactionsRes.data.items : []) || [];
     for (const reaction of reactionItems) {
-      const post = await fetchPostDetails(dsn, reaction.post_id, accountId, headers);
+      const post = await fetchPostDetails(dsn, reaction.post_id, linkedInAccountId, headers);
       if (post) {
         reactions.push({
           type: reaction.value,
@@ -180,7 +189,7 @@ export async function POST(request: Request) {
     const comments = [];
     const commentItems = (commentsRes.ok ? commentsRes.data.items : []) || [];
     for (const comment of commentItems) {
-      const post = await fetchPostDetails(dsn, comment.post_id, accountId, headers);
+      const post = await fetchPostDetails(dsn, comment.post_id, linkedInAccountId, headers);
       if (post) {
         comments.push({
           text: comment.text,
@@ -195,7 +204,7 @@ export async function POST(request: Request) {
     }
 
     // Step 4: Fetch messages and get chatId
-    const { messages, chatId } = await fetchMessages(dsn, userId, accountId, headers);
+    const { messages, chatId } = await fetchMessages(dsn, userId, linkedInAccountId, headers);
 
     // Prepare the simplified profile info
     const profileInfo = {
