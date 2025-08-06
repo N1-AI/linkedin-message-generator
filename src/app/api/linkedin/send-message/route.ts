@@ -15,24 +15,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'API key or DSN not configured' }, { status: 500 });
     }
 
-    // Remove protocol and port from DSN if present
-    const dsnBase = dsn.replace(/^https?:\/\//, '').split(':')[0];
-    
-    // Create FormData
-    const formData = new FormData();
-    formData.append('text', text);
+    // Create request body
+    const requestBody = {
+      text: text
+    };
 
     // Send message using the Unipile API
     const response = await fetch(
-      `https://${dsnBase}:14756/api/v1/chats/${chatId}/messages`,
+      `${dsn}/api/v1/chats/${chatId}/messages`,
       {
         method: 'POST',
         headers: {
           'X-API-KEY': apiKey,
-          'accept': 'application/json',
-          // Don't set Content-Type header, let the browser set it with the boundary
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
-        body: formData
+        body: JSON.stringify(requestBody)
       }
     );
 

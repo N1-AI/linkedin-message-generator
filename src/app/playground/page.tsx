@@ -415,9 +415,16 @@ export default function Playground() {
         }
       });
       
-      // For mobile, store recommendations in sessionStorage and navigate
+      // For mobile, store recommendations and ensure profile data in sessionStorage and navigate
       if (window.innerWidth < 640) {
+        // Store recommendations
         sessionStorage.setItem('playgroundRecommendations', JSON.stringify(recommendation));
+        
+        // Ensure profile data is stored
+        if (profileData) {
+          sessionStorage.setItem('enrichedProfileData', JSON.stringify(profileData));
+        }
+        
         router.push('/playground/results');
         return;
       }
